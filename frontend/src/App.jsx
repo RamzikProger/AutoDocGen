@@ -4,9 +4,11 @@ import {
   History,
   LoaderCircle,
   LogOut,
+  Moon,
   PlusCircle,
   Settings2,
   Sparkles,
+  Sun,
   Trash2,
   UploadCloud,
   FileDown,
@@ -39,7 +41,16 @@ const ACCEPTED_EXTENSIONS = [
   ".go",
 ];
 
+const THEME_STORAGE_KEY = "theme";
+
 function App() {
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem(THEME_STORAGE_KEY) === "light" ? "light" : "dark";
+    } catch {
+      return "dark";
+    }
+  });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authMode, setAuthMode] = useState("login");
   const [authEmail, setAuthEmail] = useState("");
@@ -68,6 +79,21 @@ function App() {
   const extensionsHint = useMemo(() => ACCEPTED_EXTENSIONS.join(", "), []);
   const acceptList = useMemo(() => ACCEPTED_EXTENSIONS.join(","), []);
   const canCancel = isLoading && Boolean(activeAnalysisId);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove("theme-light", "theme-dark");
+    root.classList.add(theme === "light" ? "theme-light" : "theme-dark");
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      /* ignore */
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
 
   const appendAnalysisLog = (message, level = "INFO") => {
     if (!message || !message.includes("ANALYSIS") && !message.includes("COMPRESSION") && !message.includes("PROMPT BUILD") && !message.includes("OLLAMA CALL") && !message.includes("PROVIDER") && !message.includes("CHUNK #")) {
@@ -359,12 +385,23 @@ function App() {
   if (!isLoggedIn) {
     const isRegister = authMode === "register";
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="app-page relative min-h-screen">
+        <button
+          type="button"
+          className="theme-toggle-btn fixed right-4 top-4 z-50"
+          onClick={toggleTheme}
+          aria-label={theme === "light" ? "Тёмная тема" : "Светлая тема"}
+        >
+          {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
+          <span className="hidden sm:inline">
+            {theme === "light" ? "Тёмная" : "Светлая"}
+          </span>
+        </button>
         <div className="bg-grid fixed inset-0 opacity-40" />
         <div className="relative mx-auto flex min-h-screen max-w-5xl items-center justify-center p-6">
           <section className="glass-panel w-full max-w-2xl rounded-3xl border p-10">
-            <h1 className="text-5xl font-bold tracking-tight text-white">AutoDocGen</h1>
-            <p className="mt-4 text-lg text-slate-300 text-center">
+            <h1 className="app-heading text-5xl font-bold tracking-tight">AutoDocGen</h1>
+            <p className="app-text-muted mt-4 text-center text-lg">
               ИИ-анализ технической документации
             </p>
             <div className="mx-auto mt-8 max-w-lg space-y-3">
@@ -408,7 +445,7 @@ function App() {
                 {isRegister ? "Войти" : "Регистрация"}
               </button>
             </div>
-            <p className="mt-4 text-center text-sm text-slate-300">{status}</p>
+            <p className="app-text-muted mt-4 text-center text-sm">{status}</p>
           </section>
         </div>
       </div>
@@ -416,16 +453,16 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="app-page relative min-h-screen">
       <div className="bg-grid fixed inset-0 opacity-40" />
       <div className="relative mx-auto grid min-h-screen max-w-[1600px] grid-cols-1 gap-6 p-4 md:grid-cols-[280px_1fr] md:p-8">
         <aside className="glass-panel flex flex-col gap-4 p-5">
           <h1 className="text-xl font-semibold tracking-tight">AutoDocGen</h1>
-          <p className="text-sm text-slate-300">AI-технический анализ проекта</p>
+          <p className="app-text-muted text-sm">AI-технический анализ проекта</p>
           {showSettings && (
             <label className="mt-2 space-y-2 text-sm">
-              <span className="text-slate-300">Режим модели</span>
-              <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 text-xs text-slate-300">
+              <span className="app-text-muted">Режим модели</span>
+              <div className="app-panel-inset app-text-muted rounded-xl border p-3 text-xs">
                 Используется единый backend-провайдер IOI. Модель и API ключ берутся из
                 переменных окружения сервера.
               </div>
@@ -446,6 +483,15 @@ function App() {
             <Settings2 size={16} />
             Настройки модели
           </button>
+          <button
+            type="button"
+            className="sidebar-btn"
+            onClick={toggleTheme}
+            aria-label={theme === "light" ? "Тёмная тема" : "Светлая тема"}
+          >
+            {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+            Тема: {theme === "light" ? "светлая" : "тёмная"}
+          </button>
           <button className="sidebar-btn mt-auto" onClick={() => setIsLoggedIn(false)}>
             <LogOut size={16} />
             Выход
@@ -457,7 +503,7 @@ function App() {
             className={`glass-panel relative overflow-hidden rounded-3xl border p-6 transition-all duration-300 ${
               isDragging
                 ? "scale-[1.01] border-violet-400/80 shadow-[0_0_30px_rgba(139,92,246,0.35)]"
-                : "border-white/10"
+                : ""
             }`}
             onDrop={onDrop}
             onDragOver={(event) => {
@@ -474,10 +520,10 @@ function App() {
                   <h2 className="text-lg font-medium">
                     Drag & Drop: от {MIN_FILES} до {MAX_FILES} файлов
                   </h2>
-                  <p className="mt-1 text-sm text-slate-300">
+                  <p className="app-text-muted mt-1 text-sm">
                     Форматы: {extensionsHint}
                   </p>
-                  <p className="mt-2 text-xs text-slate-400">
+                  <p className="app-text-faint mt-2 text-xs">
                     Сейчас выбрано: {files.length}
                   </p>
                 </div>
@@ -494,12 +540,12 @@ function App() {
                 />
               </label>
             </div>
-            <div className="relative mt-4 space-y-2 rounded-xl border border-white/10 bg-slate-900/40 p-3">
-              <div className="flex items-center justify-between text-xs text-slate-300">
+            <div className="app-panel-inset relative mt-4 space-y-2 rounded-xl border p-3">
+              <div className="app-text-muted flex items-center justify-between text-xs">
                 <span>{currentStage || "Ожидание запуска анализа"}</span>
                 <span>{progressPercent}%</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+              <div className="app-progress-track h-2 overflow-hidden rounded-full">
                 <div
                   className="h-full rounded-full bg-violet-400 transition-all duration-300"
                   style={{ width: `${progressPercent}%` }}
@@ -511,12 +557,12 @@ function App() {
                 {files.map((file, index) => (
                   <div
                     key={`${file.name}-${index}`}
-                    className="inline-flex h-8 w-[110px] items-center justify-between rounded-full border border-white/20 bg-slate-900/70 px-3 text-xs text-slate-200"
+                    className="app-file-chip inline-flex h-8 w-[110px] items-center justify-between rounded-full border px-3 text-xs"
                     title={file.name}
                   >
                     <span className="truncate pr-2">{file.name}</span>
                     <button
-                      className="shrink-0 text-slate-400 transition hover:text-rose-300"
+                      className="app-text-faint shrink-0 transition hover:text-rose-500"
                       onClick={() => removeFile(index)}
                       type="button"
                       aria-label={`Удалить ${file.name}`}
@@ -530,12 +576,12 @@ function App() {
           </section>
 
           <section className="glass-panel flex min-h-[420px] flex-col overflow-hidden rounded-3xl">
-            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+            <div className="flex items-center justify-between border-b px-6 py-4">
               <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-cyan-300" />
+                <Sparkles size={16} className="text-cyan-500" />
                 <h3 className="font-medium">Markdown Editor / Preview</h3>
               </div>
-              <span className="text-xs text-slate-300">{status}</span>
+              <span className="app-text-muted text-xs">{status}</span>
             </div>
 
             <div className="grow overflow-auto p-6">
@@ -550,23 +596,23 @@ function App() {
               ) : activeView === "history" ? (
                 <div className="space-y-3">
                   {historyItems.length === 0 ? (
-                    <p className="text-slate-400">История пока пустая.</p>
+                    <p className="app-text-faint">История пока пустая.</p>
                   ) : (
                     historyItems.map((item) => (
                       <button
                         key={item.id}
                         type="button"
-                        className="w-full rounded-xl border border-white/10 bg-slate-900/50 p-3 text-left transition hover:bg-slate-900/80"
+                        className="app-history-card w-full rounded-xl border p-3 text-left transition"
                         onClick={() => {
                           setMarkdown(item.content || "");
                           setActiveView("editor");
                           setStatus(`Открыт отчет #${item.id}`);
                         }}
                       >
-                        <p className="text-sm font-medium text-slate-100">
+                        <p className="app-heading text-sm font-medium">
                           {item.project_name || `Отчет #${item.id}`}
                         </p>
-                        <p className="mt-1 text-xs text-slate-400">
+                        <p className="app-text-faint mt-1 text-xs">
                           {item.created_at || "дата неизвестна"}
                         </p>
                       </button>
@@ -574,7 +620,11 @@ function App() {
                   )}
                 </div>
               ) : markdown ? (
-                <article className="markdown-body prose prose-invert max-w-none">
+                <article
+                  className={`markdown-body prose max-w-none ${
+                    theme === "light" ? "prose-slate" : "prose-invert"
+                  }`}
+                >
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeHighlight]}
@@ -583,7 +633,7 @@ function App() {
                   </ReactMarkdown>
                 </article>
               ) : (
-                <p className="text-slate-400">
+                <p className="app-text-faint">
                   После генерации здесь появится технический анализ в Markdown.
                 </p>
               )}
@@ -630,9 +680,9 @@ function App() {
               {showDebugPanel ? "Скрыть" : "Показать"} консоль отладки
             </button>
             {showDebugPanel ? (
-              <div className="mt-3 max-h-52 space-y-2 overflow-auto rounded-xl border border-white/10 bg-slate-950/60 p-3 text-xs">
+              <div className="app-debug-panel mt-3 max-h-52 space-y-2 overflow-auto rounded-xl border p-3 text-xs">
                 {debugLogs.length === 0 ? (
-                  <p className="text-slate-400">Логи пока не получены.</p>
+                  <p className="app-text-faint">Логи пока не получены.</p>
                 ) : (
                   debugLogs.map((entry, idx) => (
                     <p
