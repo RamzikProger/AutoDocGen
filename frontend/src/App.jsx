@@ -1,4 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { 
+  useEffect, 
+  useMemo, 
+  useRef, 
+  useState 
+} from "react";
 import axios from "axios";
 import {
   History,
@@ -41,8 +46,10 @@ const ACCEPTED_EXTENSIONS = [
   ".go",
 ];
 
+const APP_VERSION = "1.0.0";
 const THEME_STORAGE_KEY = "theme";
 
+// Версия 1.0 - Стабильная
 function App() {
   const [theme, setTheme] = useState(() => {
     try {
